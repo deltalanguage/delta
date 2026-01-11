@@ -1,0 +1,58 @@
+// ═══════════════════════════════════════════════════════════════════════════
+// Tiny Transformer in Delta (Inline Version)
+// All operations inlined for SIR compatibility
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Data inputs  
+obs tokens: Tensor;
+obs targets: Tensor;
+
+// Embeddings
+param tok_emb: Tensor = randn(46, 64) * 0.02;
+param pos_emb: Tensor = randn(32, 64) * 0.02;
+
+// Attention
+param W_q: Tensor = randn(64, 64) * 0.02;
+param W_k: Tensor = randn(64, 64) * 0.02;  
+param W_v: Tensor = randn(64, 64) * 0.02;
+param W_o: Tensor = randn(64, 64) * 0.02;
+
+// FFN
+param ff_w1: Tensor = randn(64, 256) * 0.02;
+param ff_b1: Tensor = zeros(256);
+param ff_w2: Tensor = randn(256, 64) * 0.02;
+param ff_b2: Tensor = zeros(64);
+
+// Forward (fully inlined)
+fn forward(x: Tensor) -> Tensor {
+    // Embeddings
+    let tok = embedding(x, tok_emb);
+    let h = tok + pos_emb;
+    
+    // Self-attention (simplified, no layer norm for now)
+    let q = matmul(h, W_q);
+    let k = matmul(h, W_k);
+    let v = matmul(h, W_v);
+    let scores = matmul(q, transpose(k)) / 8.0;
+    let attn = softmax(scores);
+    let attn_out = matmul(matmul(attn, v), W_o);
+    let h2 = h + attn_out;
+    
+    // FFN
+    let ff = matmul(relu(matmul(h2, ff_w1) + ff_b1), ff_w2) + ff_b2;
+    let h3 = h2 + ff;
+    
+    // Output projection (weight tying)
+    matmul(h3, transpose(tok_emb))
+}
+
+// Training
+learn train {
+    let logits = forward(tokens);
+    cross_entropy(logits, targets)
+}
+
+// Inference
+learn infer {
+    softmax(forward(tokens))
+}

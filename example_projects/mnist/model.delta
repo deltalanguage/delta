@@ -1,0 +1,17 @@
+// MNIST Classifier
+// A simple feedforward neural network for handwritten digit recognition
+// Expected accuracy: ~98%
+
+// Model parameters
+param W1: Tensor = randn(784, 256) * 0.01;
+param b1: Tensor = zeros(256);
+
+param W2: Tensor = randn(256, 128) * 0.01;
+param b2: Tensor = zeros(128);
+
+param W3: Tensor = randn(128, 10) * 0.01;
+param b3: Tensor = zeros(10);
+
+// Forward pass function
+fn forward(x: Tensor) -> Tensor { matmul(relu(matmul(relu(matmul(x, W1) + b1), W2) + b2), W3) + b3 }
+
