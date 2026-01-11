@@ -14,7 +14,7 @@
 
 [**Website**](https://deltalanguage.org) | [**Documentation**](https://deltalanguage.org/docs) | [**Get Started**](https://deltalanguage.org/docs/quick-start)
 
-Delta is a compiled language that transforms *learning intent* into optimized tensor programs. Instead of manually writing loss functions and training loops, you declare what you want your model to learn through constraints—Delta compiles this into efficient PyTorch code.
+Delta is a compiled language that transforms *learning intent* into optimized tensor programs. Instead of manually writing loss functions and training loops, you declare what you want your model to learn through constraints. Delta compiles this into efficient PyTorch code.
 
 ```delta
 param weights = randn(784, 10);
