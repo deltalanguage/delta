@@ -1,3 +1,9 @@
+> ⚠️ **DO NOT USE IN PRODUCTION**
+>
+> This project is currently in **v0.x** and is under active development.
+> The API, behavior, and output format may change at any time.
+> Expect breaking changes and bugs.
+> 
 # Delta
 
 [![PyPI version](https://badge.fury.io/py/delta-lang.svg)](https://pypi.org/project/delta-lang/)
