@@ -256,9 +256,7 @@ class SIRBuilder:
     
     def _build_constraint_stmt(self, stmt: ASTConstraintStmt) -> ConstraintOp:
         """Build a constraint statement."""
-        print(f"DEBUG: Building constraint stmt: {stmt}")
         expr_node = self._build_expr(stmt.expr)
-        print(f"DEBUG: Constraint expr_node created: {type(expr_node)}")
         
         # Determine constraint kind
         if stmt.kind == ASTConstraintKind.REQUIRE:
@@ -279,18 +277,16 @@ class SIRBuilder:
         if stmt.slack:
             slack = self._build_expr(stmt.slack)
         
-        print("DEBUG: Before SIRProperty")
         props = SIRProperty(
-            dtype=FloatType(),
-            requires_grad=expr_node.requires_grad,
+            dtype=ConstraintType(),
+            role=RoleInfo.constraint(),
             location=stmt.location
         )
         
-        print("DEBUG: Before ConstraintOp")
         return ConstraintOp(
             kind=kind,
             lhs=expr_node,
-            rhs=None,
+            rhs=None,  # All constraints normalized to expr checks
             weight=weight,
             slack=slack,
             _props=props
@@ -358,7 +354,6 @@ class SIRBuilder:
             gate = GateOp(compare=TensorOpKind.GT, lhs=condition, rhs=Const(value=0.0), temperature=temperature)
             then_val = then_block.result or Const(value=0.0)
             else_val = (else_block.result if else_block else None) or Const(value=0.0)
-            print(f"DEBUG: IfStmt temperature={temperature}, then_result={then_block.result}, else_result={else_block.result if else_block else 'None'}")
             return MixOp(gate, then_val, else_val)
         
         return None
@@ -447,9 +442,9 @@ class SIRBuilder:
         if block.result:
             result = self._build_expr(block.result)
             nodes.append(result)
-        elif nodes and not isinstance(block.statements[-1], (ReturnStmt, ParamDecl, ObsDecl)):
+        elif nodes and not isinstance(block.statements[-1], (ParamDecl, ObsDecl)):
             # Fallback: if no explicit result, use the last node as result (like Rust/Ruby)
-            # but only if it's not a return or declaration
+            # Declared params/obs don't produce values
             result = nodes[-1]
         
         return SIRBlock(nodes=nodes, result=result)

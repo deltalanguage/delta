@@ -527,6 +527,8 @@ class FXLowering:
             # Instantiate the actual torch module
             if node.kind == 'Linear':
                 self.layers[layer_id] = torch.nn.Linear(*node.args, **node.kwargs)
+            elif node.kind == 'Conv1d':
+                self.layers[layer_id] = torch.nn.Conv1d(*node.args, **node.kwargs)
             elif node.kind == 'Conv2d':
                 self.layers[layer_id] = torch.nn.Conv2d(*node.args, **node.kwargs)
             elif node.kind == 'Embedding':

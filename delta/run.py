@@ -27,7 +27,7 @@ from delta.types.types import TensorType, ConcreteDim
 # Note: We import frontend AST types here for initializer evaluation.
 # Ideally this metadata would be extracted during compilation, but
 # for now we use the AST directly since CompileResult exposes it.
-from delta.frontend.ast import ParamDecl, Call, Identifier, Literal
+from delta.frontend.ast import ParamDecl, Call, Identifier, Literal, BinaryOp
 
 
 @dataclass 
@@ -48,7 +48,11 @@ class DeltaModel:
     
     def __init__(self, compile_result: CompileResult):
         self._compile_result = compile_result
-        self._module = list(compile_result.graph_modules.values())[0]
+        # Prefer 'forward' module if available (standard for training), otherwise take the first one
+        if compile_result.graph_modules and "forward" in compile_result.graph_modules:
+            self._module = compile_result.graph_modules["forward"]
+        else:
+            self._module = list(compile_result.graph_modules.values())[0]
         self._device = torch.device("cpu")
         self._init_params_from_sir()
     
@@ -150,7 +154,15 @@ class DeltaModel:
     
     def _extract_shape_from_initializer(self, initializer_expr: Any) -> Optional[tuple]:
         """Extract shape from an initializer expression like randn(3, 2)."""
-        from delta.frontend.ast import Call, Identifier, Literal, Tensor
+        from delta.frontend.ast import Call, Identifier, Literal, Tensor, BinaryOp
+        
+        # Handle scaling: randn(...) * 0.01
+        if isinstance(initializer_expr, BinaryOp):
+            # Recursively check operands
+            shape = self._extract_shape_from_initializer(initializer_expr.left)
+            if shape: return shape
+            return self._extract_shape_from_initializer(initializer_expr.right)
+
         if isinstance(initializer_expr, Call) and isinstance(initializer_expr.func, Identifier):
             func_name = initializer_expr.func.name
             args = initializer_expr.args
